@@ -51,6 +51,9 @@ states = []
 # all possible actions
 actions = np.arange(-MAX_MOVE_OF_CARS, MAX_MOVE_OF_CARS + 1)
 
+# list of policies at every iteration
+policy_list=[policy]
+
 # axes for printing use
 AxisXPrint = []
 AxisYPrint = []
@@ -75,6 +78,17 @@ def prettyPrint(data, labels):
     ax.set_xlabel(labels[0])
     ax.set_ylabel(labels[1])
     ax.set_zlabel(labels[2])
+
+# plot the sequence of policies found by policy iteration
+def print2DPolicy(policy_list):
+    global figureIndex
+    for index, policy in enumerate(policy_list):
+        fig = plt.figure(figureIndex)
+        figureIndex += 1
+        contours = plt.contour(policy, colors='black', levels=actions)
+        plt.title("Policy at iteration #" + str(index))
+        plt.gca().locator_params(nbins=10)
+        plt.clabel(contours, inline=True, fontsize=8, fmt='%1d')
 
 # An up bound for poisson distribution
 # If n is greater than this value, then the probability of getting n is truncated to 0
@@ -168,13 +182,13 @@ while True:
                     actionReturns.append(-float('inf'))
             bestAction = np.argmax(actionReturns)
             newPolicy[i, j] = actions[bestAction]
-
         # if policy is stable
         policyChanges = np.sum(newPolicy != policy)
         print('Policy for', policyChanges, 'states changed')
         if policyChanges == 0:
             policy = newPolicy
             break
+        policy_list.append(newPolicy)
         policy = newPolicy
         improvePolicy = False
 
@@ -189,6 +203,7 @@ while True:
 
 prettyPrint(policy, ['# of cars in first location', '# of cars in second location', '# of cars to move during night'])
 prettyPrint(stateValue, ['# of cars in first location', '# of cars in second location', 'expected returns'])
+print2DPolicy(policy_list)
 plt.show()
 
 
