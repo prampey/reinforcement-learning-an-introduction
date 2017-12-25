@@ -25,25 +25,34 @@ policy = np.zeros(GOAL + 1)
 stateValue = np.zeros(GOAL + 1)
 stateValue[GOAL] = 1.0
 
+# Number of sweeps through the state set
+sweepCount = 0
+
+#small positive number
+theta = 1e-25
+
 # value iteration
 while True:
     delta = 0.0
+    sweepCount +=1
     for state in states[1:GOAL]:
         # get possilbe actions for current state
-        actions = np.arange(min(state, GOAL - state) + 1)
+        actions = np.arange(1, min(state, GOAL - state) + 1)
         actionReturns = []
         for action in actions:
             actionReturns.append(headProb * stateValue[state + action] + (1 - headProb) * stateValue[state - action])
         newValue = np.max(actionReturns)
-        delta += np.abs(stateValue[state] - newValue)
+        delta = max(np.abs(stateValue[state] - newValue), delta)
         # update state value
         stateValue[state] = newValue
-    if delta < 1e-9:
+    if delta < theta:
+        print("Total number of sweeps through state set: " + str(sweepCount))
         break
 
 # calculate the optimal policy
 for state in states[1:GOAL]:
-    actions = np.arange(min(state, GOAL - state) + 1)
+    # Actions start from $1 stakes
+    actions = np.arange(1, min(state, GOAL - state) + 1)
     actionReturns = []
     for action in actions:
         actionReturns.append(headProb * stateValue[state + action] + (1 - headProb) * stateValue[state - action])
@@ -54,9 +63,13 @@ for state in states[1:GOAL]:
 plt.figure(1)
 plt.xlabel('Capital')
 plt.ylabel('Value estimates')
-plt.plot(stateValue)
+#Plotting with a step function is better to discern between discrete values
+plt.step(states, stateValue)
+# Set 5 ticks on the x-axis, so as to get an interval of 25 units between each other
+plt.gca().locator_params(nbins=5, axis='x')
 plt.figure(2)
-plt.scatter(states, policy)
+plt.step(states, policy)
+plt.gca().locator_params(nbins=5, axis='x')
 plt.xlabel('Capital')
 plt.ylabel('Final policy (stake)')
 plt.show()
